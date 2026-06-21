@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Music Library</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #eeede8;
+    --text: #1a1a1a; --text2: #555550; --text3: #888882;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --accent: #5340b8; --accent-bg: #eeedfe; --accent-text: #3c3489;
+    --green: #3b6d11; --green-bg: #eaf3de;
+    --amber: #854f0b; --amber-bg: #faeeda;
+    --red: #a32d2d; --red-bg: #fcebeb;
+    --teal: #0f6e56; --teal-bg: #e1f5ee;
+    --coral: #993c1d; --coral-bg: #faece7;
+    --pink: #993556; --pink-bg: #fbeaf0;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #242422; --bg3: #2e2e2b;
+      --text: #f0efe8; --text2: #b4b2a9; --text3: #888882;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --accent: #9f96e8; --accent-bg: #26215c; --accent-text: #cecbf6;
+      --green: #c0dd97; --green-bg: #173404;
+      --amber: #fac775; --amber-bg: #412402;
+      --red: #f7c1c1; --red-bg: #501313;
+      --teal: #9fe1cb; --teal-bg: #04342c;
+      --coral: #f5c4b3; --coral-bg: #4a1b0c;
+      --pink: #f4c0d1; --pink-bg: #4b1528;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg2); color: var(--text); font-size: 14px; min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .app { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
+  .header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .header-title { font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .header-stats { display: flex; gap: 16px; margin-left: auto; }
+  .stat { font-size: 12px; color: var(--text3); }
+  .stat strong { color: var(--text); font-weight: 500; }
+
+  /* Toolbar */
+  .toolbar { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input[type="text"], input[type="url"], select, textarea {
+    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius);
+    color: var(--text); font-size: 13px; padding: 6px 10px; outline: none; font-family: inherit;
+  }
+  input[type="text"]:focus, input[type="url"]:focus, select:focus, textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 2px rgba(83,74,183,0.15);
+  }
+  .search-box { flex: 1; min-width: 180px; padding: 7px 10px; font-size: 13px; }
+  select { cursor: pointer; }
+  button {
+    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius);
+    color: var(--text); font-size: 13px; padding: 6px 12px; cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  button:hover { background: var(--bg3); }
+  button:active { transform: scale(0.98); }
+  button.primary { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); font-weight: 500; }
+  button.primary:hover { opacity: 0.85; }
+  .tag-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Quick add */
+  .quick-add { background: var(--bg); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .quick-add input { flex: 1; min-width: 140px; }
+  .quick-add .url-hint { font-size: 11px; color: var(--text3); white-space: nowrap; }
+
+  /* Main */
+  .main { padding: 16px 20px; overflow-y: auto; }
+
+  /* Table */
+  .table-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { background: var(--bg2); color: var(--text2); font-weight: 500; font-size: 12px; text-align: left; padding: 8px 12px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--text); }
+  th .sort-icon { opacity: 0.4; font-size: 10px; }
+  th.sorted .sort-icon { opacity: 1; color: var(--accent-text); }
+  td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .col-num { width: 48px; color: var(--text3); font-size: 12px; }
+  .col-title { width: 30%; }
+  .col-artist { width: 20%; }
+  .col-tags { width: 22%; }
+  .col-rating { width: 90px; }
+  .col-date { width: 100px; }
+  .col-actions { width: 72px; text-align: right; }
+  .song-title { font-weight: 500; font-size: 13px; }
+  .song-title a { color: var(--text); }
+  .song-title a:hover { color: var(--accent); text-decoration: none; }
+  .song-artist { color: var(--text2); font-size: 12px; }
+  .memo-text { color: var(--text3); font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  .date-text { color: var(--text3); font-size: 12px; }
+
+  /* Tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 11px; padding: 2px 7px; border-radius: 20px; cursor: pointer; font-weight: 500; border: none; }
+  .tag:hover { opacity: 0.8; }
+  .tag-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+
+  /* Rating */
+  .stars { display: inline-flex; gap: 1px; }
+  .star { font-size: 14px; cursor: pointer; color: var(--border2); transition: color 0.1s; }
+  .star.on { color: #e29a00; }
+  .star:hover ~ .star { color: var(--border2) !important; }
+  .stars:hover .star { color: #e29a00; }
+  .stars .star:hover ~ .star { color: var(--border2); }
+
+  /* Row actions */
+  .row-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; }
+  tr:hover .row-actions { opacity: 1; }
+  .icon-btn { background: none; border: none; color: var(--text3); padding: 3px 5px; font-size: 16px; cursor: pointer; border-radius: 4px; }
+  .icon-btn:hover { color: var(--text); background: var(--bg3); }
+
+  /* Empty state */
+  .empty { padding: 60px 20px; text-align: center; color: var(--text3); }
+  .empty-title { font-size: 16px; color: var(--text2); margin-bottom: 8px; }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { padding: 16px 20px 12px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 15px; font-weight: 500; }
+  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 12px 20px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+  .field label { display: block; font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .tag-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag-option { padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg2); }
+  .tag-option.selected { font-weight: 500; }
+  .new-tag-row { display: flex; gap: 6px; margin-top: 8px; }
+  .new-tag-row input { flex: 1; }
+
+  /* Import modal */
+  .csv-preview { font-family: monospace; font-size: 11px; background: var(--bg2); border-radius: var(--radius); padding: 10px; max-height: 120px; overflow: auto; color: var(--text2); border: 0.5px solid var(--border); margin-top: 8px; }
+  .col-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .col-map label { font-size: 12px; color: var(--text2); }
+
+  /* Notification */
+  .notif { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .notif.show { opacity: 1; }
+
+  /* Tag color classes */
+  .tc-purple { background: var(--accent-bg); color: var(--accent-text); }
+  .tc-green  { background: var(--green-bg); color: var(--green); }
+  .tc-amber  { background: var(--amber-bg); color: var(--amber); }
+  .tc-red    { background: var(--red-bg); color: var(--red); }
+  .tc-teal   { background: var(--teal-bg); color: var(--teal); }
+  .tc-coral  { background: var(--coral-bg); color: var(--coral); }
+  .tc-pink   { background: var(--pink-bg); color: var(--pink); }
+  .tc-gray   { background: var(--bg3); color: var(--text2); }
+
+  @media (max-width: 600px) {
+    .col-date, .col-num { display: none; }
+    .header-stats { display: none; }
+    .col-title { width: 40%; }
+    .col-artist { width: 25%; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="header">
+    <div class="header-title">🎵 My Music Library</div>
+    <div class="header-stats">
+      <div class="stat"><strong id="stat-total">0</strong> 曲</div>
+      <div class="stat"><strong id="stat-filtered">0</strong> 件表示</div>
+    </div>
+    <button onclick="openImport()">📥 CSVインポート</button>
+    <button onclick="exportCSV()">📤 CSVエクスポート</button>
+    <button onclick="clearStorage()" style="color:var(--red)">🗑 データをクリア</button>
+  </div>
+
+  <div class="quick-add">
+    <span style="font-size:12px;color:var(--text2);white-space:nowrap;font-weight:500;">＋ 追加</span>
+    <input type="url" id="qa-url" placeholder="YouTubeのURLを貼る（自動で曲名を取得）" style="flex:2;min-width:200px" onpaste="handleUrlPaste(event)" onkeydown="if(event.key==='Enter')quickAdd()">
+    <input type="text" id="qa-title" placeholder="曲名 *" style="flex:1.2;min-width:120px" onkeydown="if(event.key==='Enter')quickAdd()">
+    <input type="text" id="qa-artist" placeholder="アーティスト" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter')quickAdd()">
+    <button class="primary" onclick="quickAdd()">追加</button>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" class="search-box" id="search" placeholder="🔍 曲名・アーティストで検索..." oninput="render()">
+    <select id="filter-tag" onchange="render()">
+      <option value="">タグ：すべて</option>
+    </select>
+    <select id="sort-by" onchange="render()">
+      <option value="addedAt-desc">追加が新しい順</option>
+      <option value="addedAt-asc">追加が古い順</option>
+      <option value="title-asc">曲名 A→Z</option>
+      <option value="title-desc">曲名 Z→A</option>
+      <option value="artist-asc">アーティスト A→Z</option>
+      <option value="rating-desc">評価が高い順</option>
+    </select>
+    <select id="filter-rating" onchange="render()">
+      <option value="0">★ 評価：すべて</option>
+      <option value="5">★★★★★ のみ</option>
+      <option value="4">★★★★ 以上</option>
+      <option value="3">★★★ 以上</option>
+    </select>
+    <button onclick="openTagManager()">🏷 タグ管理</button>
+  </div>
+
+  <div class="main">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th class="col-title" onclick="setSort('title')">曲名 <span class="sort-icon">▲</span></th>
+            <th class="col-artist" onclick="setSort('artist')">アーティスト <span class="sort-icon">▲</span></th>
+            <th class="col-tags">タグ</th>
+            <th class="col-rating" onclick="setSort('rating')">評価 <span class="sort-icon">▲</span></th>
+            <th class="col-date" onclick="setSort('addedAt')">追加日 <span class="sort-icon">▲</span></th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="song-list"></tbody>
+      </table>
+      <div id="empty-state" class="empty" style="display:none">
+        <div class="empty-title">曲がまだありません</div>
+        <p style="margin-top:6px;font-size:13px">上のフォームからYouTubeのURLや曲名を入力して追加してください</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('edit-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="edit-modal-title">曲を編集</div>
+      <button class="icon-btn" onclick="closeModal('edit-modal')" style="opacity:1;font-size:18px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>曲名 *</label><input type="text" id="edit-title"></div>
+      <div class="field"><label>アーティスト</label><input type="text" id="edit-artist"></div>
+      <div class="field"><label>YouTubeのURL</label><input type="url" id="edit-url"></div>
+      <div class="field">
+        <label>評価</label>
+        <div class="stars" id="edit-stars">
+          <span class="star" data-v="1" onclick="setEditRating(1)">★</span>
+          <span class="star" data-v="2" onclick="setEditRating(2)">★</span>
+          <span class="star" data-v="3" onclick="setEditRating(3)">★</span>
+          <span class="star" data-v="4" onclick="setEditRating(4)">★</span>
+          <span class="star" data-v="5" onclick="setEditRating(5)">★</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>タグ</label>
+        <div class="tag-selector" id="edit-tag-selector"></div>
+        <div class="new-tag-row">
+          <input type="text" id="new-tag-name" placeholder="新しいタグ名">
+          <button onclick="addNewTag()">追加</button>
+        </div>
+      </div>
+      <div class="field"><label>メモ</label><textarea id="edit-memo" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('edit-modal')">キャンセル</button>
+      <button class="primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div id="import-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('import-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">CSVインポート</div>
+      <button class="icon-btn" onclick="closeModal('import-modal')" style="opacity:1;font-size:18px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>CSVファイルを選択（スプレッドシートから書き出したもの）</label>
+        <input type="file" id="csv-file" accept=".csv,.tsv,.txt" onchange="previewCSV(event)" style="margin-top:6px;width:100%;border:none;background:none;padding:0;color:var(--text)">
+      </div>
+      <div id="csv-preview-area" style="display:none">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">プレビュー（最初の3行）：</div>
+        <div class="csv-preview" id="csv-preview-text"></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:12px;margin-bottom:4px">列の対応を設定：</div>
+        <div class="col-map" id="col-map"></div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text3)" id="import-count"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('import-modal')">キャンセル</button>
+      <button class="primary" id="import-btn" onclick="doImport()" style="display:none">インポート実行</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Manager Modal -->
+<div id="tag-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('tag-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">タグ管理</div>
+      <button class="icon-btn" onclick="closeModal('tag-modal')" style="opacity:1;font-size:18px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="tag-list-edit"></div>
+      <div class="new-tag-row" style="margin-top:12px">
+        <input type="text" id="new-tag-name2" placeholder="新しいタグ名">
+        <select id="new-tag-color">
+          <option value="purple">紫</option>
+          <option value="teal">青緑</option>
+          <option value="green">緑</option>
+          <option value="amber">オレンジ</option>
+          <option value="coral">珊瑚</option>
+          <option value="pink">ピンク</option>
+          <option value="red">赤</option>
+          <option value="gray">グレー</option>
+        </select>
+        <button onclick="addTagFromManager()">追加</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('tag-modal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- Data ---
+let songs = [];
+let tags = [];
+let editingId = null;
+let editRating = 0;
+let csvData = null;
+let csvHeaders = [];
+
+const TAG_COLORS = ['purple','teal','green','amber','coral','pink','red','gray'];
+
+function load() {
+  try {
+    songs = JSON.parse(localStorage.getItem('mlb-songs') || '[]');
+    tags = JSON.parse(localStorage.getItem('mlb-tags') || '[]');
+  } catch(e) { songs = []; tags = []; }
+  if (!tags.length) {
+    tags = [
+      {id:'t1',name:'作業用',color:'teal'},
+      {id:'t2',name:'ドライブ',color:'amber'},
+      {id:'t3',name:'朝',color:'green'},
+      {id:'t4',name:'夜',color:'purple'},
+      {id:'t5',name:'テンション上げ',color:'coral'},
+      {id:'t6',name:'リラックス',color:'pink'},
+    ];
+    save();
+  }
+}
+function save() {
+  localStorage.setItem('mlb-songs', JSON.stringify(songs));
+  localStorage.setItem('mlb-tags', JSON.stringify(tags));
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// --- YouTube ---
+function extractYTId(url) {
+  const m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+async function fetchYTTitle(url) {
+  const id = extractYTId(url);
+  if (!id) return null;
+  try {
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.title || null;
+  } catch(e) { return null; }
+}
+function parseYTTitle(title) {
+  if (!title) return {title:'', artist:''};
+  const separators = [' - ', ' – ', ' — ', ' / '];
+  for (const sep of separators) {
+    const i = title.indexOf(sep);
+    if (i > 0) return {artist: title.slice(0,i).trim(), title: title.slice(i+sep.length).trim().replace(/\s*\(.*?\)\s*$/, '').replace(/\s*\[.*?\]\s*$/, '').trim()};
+  }
+  return {title: title.replace(/\s*\(.*?(?:MV|Official|Video|Audio).*?\)\s*/gi,'').trim(), artist:''};
+}
+
+async function handleUrlPaste(e) {
+  await new Promise(r => setTimeout(r, 0));
+  const url = e.target.value.trim();
+  if (!extractYTId(url)) return;
+  const titleEl = document.getElementById('qa-title');
+  const artistEl = document.getElementById('qa-artist');
+  if (titleEl.value) return;
+  notify('YouTubeから曲名を取得中...');
+  const raw = await fetchYTTitle(url);
+  if (raw) {
+    const parsed = parseYTTitle(raw);
+    if (!titleEl.value) titleEl.value = parsed.title;
+    if (!artistEl.value) artistEl.value = parsed.artist;
+    notify('曲名を取得しました');
+  }
+}
+
+// --- Quick Add ---
+async function quickAdd() {
+  const url = document.getElementById('qa-url').value.trim();
+  let title = document.getElementById('qa-title').value.trim();
+  let artist = document.getElementById('qa-artist').value.trim();
+
+  if (!title && url) {
+    notify('曲名を取得中...');
+    const raw = await fetchYTTitle(url);
+    if (raw) {
+      const p = parseYTTitle(raw);
+      title = p.title;
+      if (!artist) artist = p.artist;
+    }
+  }
+  if (!title) { notify('曲名を入力してください'); return; }
+
+  const song = { id: uid(), title, artist, youtubeUrl: url, tags: [], rating: 0, memo: '', addedAt: Date.now() };
+  songs.unshift(song);
+  save();
+  document.getElementById('qa-url').value = '';
+  document.getElementById('qa-title').value = '';
+  document.getElementById('qa-artist').value = '';
+  render();
+  notify(`「${title}」を追加しました`);
+  document.getElementById('qa-url').focus();
+}
+
+// --- Render ---
+function getFilteredSorted() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const ft = document.getElementById('filter-tag').value;
+  const minR = parseInt(document.getElementById('filter-rating').value) || 0;
+  const sort = document.getElementById('sort-by').value;
+  const [field, dir] = sort.split('-');
+
+  let list = songs.filter(s => {
+    if (q && !s.title.toLowerCase().includes(q) && !s.artist.toLowerCase().includes(q)) return false;
+    if (ft && !s.tags.includes(ft)) return false;
+    if (minR && s.rating < minR) return false;
+    return true;
+  });
+  list.sort((a,b) => {
+    let va = a[field], vb = b[field];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if (va < vb) return dir==='asc' ? -1 : 1;
+    if (va > vb) return dir==='asc' ? 1 : -1;
+    return 0;
+  });
+  return list;
+}
+
+function render() {
+  updateTagFilter();
+  const list = getFilteredSorted();
+  const tbody = document.getElementById('song-list');
+  document.getElementById('stat-total').textContent = songs.length.toLocaleString();
+  document.getElementById('stat-filtered').textContent = list.length.toLocaleString();
+
+  if (!list.length) {
+    tbody.innerHTML = '';
+    document.getElementById('empty-state').style.display = '';
+  } else {
+    document.getElementById('empty-state').style.display = 'none';
+    tbody.innerHTML = list.map((s, i) => {
+      const tag = getTag(s.tags[0]);
+      const extraTags = s.tags.slice(1).length;
+      const tagHtml = tag
+        ? `<span class="tag-pill tc-${tag.color}">${tag.name}${extraTags ? ` +${extraTags}` : ''}</span>`
+        : '';
+      const stars = '★'.repeat(s.rating) + '☆'.repeat(5 - s.rating);
+      const starsColor = s.rating ? '#e29a00' : 'var(--border2)';
+      const ytLink = s.youtubeUrl
+        ? `<a href="${esc(s.youtubeUrl)}" target="_blank" rel="noopener">${esc(s.title)}</a>`
+        : esc(s.title);
+      const date = new Date(s.addedAt).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});
+      return `<tr>
+        <td class="col-num">${i+1}</td>
+        <td class="col-title">
+          <div class="song-title">${ytLink}</div>
+          ${s.memo ? `<div class="memo-text">${esc(s.memo)}</div>` : ''}
+        </td>
+        <td class="col-artist"><span class="song-artist">${esc(s.artist)}</span></td>
+        <td class="col-tags">${tagHtml}</td>
+        <td class="col-rating"><span style="color:${starsColor};font-size:13px;letter-spacing:1px">${stars}</span></td>
+        <td class="col-date"><span class="date-text">${date}</span></td>
+        <td class="col-actions">
+          <div class="row-actions">
+            ${s.youtubeUrl ? `<a class="icon-btn" href="${esc(s.youtubeUrl)}" target="_blank" rel="noopener" title="YouTubeで開く" style="font-size:15px;text-decoration:none">▶</a>` : ''}
+            <button class="icon-btn" title="編集" onclick="openEdit('${s.id}')">✏️</button>
+            <button class="icon-btn" title="削除" onclick="deleteSong('${s.id}')">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getTag(id) { return tags.find(t => t.id === id); }
+
+function updateTagFilter() {
+  const sel = document.getElementById('filter-tag');
+  const cur = sel.value;
+  const usedIds = new Set(songs.flatMap(s => s.tags));
+  const used = tags.filter(t => usedIds.has(t.id));
+  sel.innerHTML = '<option value="">タグ：すべて</option>' +
+    used.map(t => `<option value="${t.id}"${cur===t.id?' selected':''}>${t.name}</option>`).join('');
+}
+
+function setSort(field) {
+  const sel = document.getElementById('sort-by');
+  const cur = sel.value;
+  const [cf, cd] = cur.split('-');
+  const nd = cf === field ? (cd === 'asc' ? 'desc' : 'asc') : 'desc';
+  sel.value = field + '-' + nd;
+  render();
+}
+
+// --- Edit ---
+function openEdit(id) {
+  const s = songs.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  editRating = s.rating;
+  document.getElementById('edit-modal-title').textContent = '曲を編集';
+  document.getElementById('edit-title').value = s.title;
+  document.getElementById('edit-artist').value = s.artist;
+  document.getElementById('edit-url').value = s.youtubeUrl || '';
+  document.getElementById('edit-memo').value = s.memo || '';
+  renderEditStars();
+  renderTagSelector(s.tags);
+  document.getElementById('edit-modal').style.display = '';
+}
+
+function renderEditStars() {
+  document.querySelectorAll('#edit-stars .star').forEach(el => {
+    el.classList.toggle('on', parseInt(el.dataset.v) <= editRating);
+  });
+}
+
+function setEditRating(v) {
+  editRating = editRating === v ? 0 : v;
+  renderEditStars();
+}
+
+function renderTagSelector(selected) {
+  const sel = new Set(selected);
+  document.getElementById('edit-tag-selector').innerHTML = tags.map(t =>
+    `<div class="tag-option tc-${t.color}${sel.has(t.id)?' selected':''}" data-id="${t.id}" onclick="toggleTagOption(this,'${t.id}')">${t.name}</div>`
+  ).join('');
+}
+
+function toggleTagOption(el, id) {
+  el.classList.toggle('selected');
+}
+
+function saveEdit() {
+  const s = songs.find(x => x.id === editingId);
+  if (!s) return;
+  const title = document.getElementById('edit-title').value.trim();
+  if (!title) { notify('曲名を入力してください'); return; }
+  s.title = title;
+  s.artist = document.getElementById('edit-artist').value.trim();
+  s.youtubeUrl = document.getElementById('edit-url').value.trim();
+  s.memo = document.getElementById('edit-memo').value.trim();
+  s.rating = editRating;
+  s.tags = [...document.querySelectorAll('#edit-tag-selector .tag-option.selected')].map(el => el.dataset.id);
+  save();
+  render();
+  closeModal('edit-modal');
+  notify('保存しました');
+}
+
+function deleteSong(id) {
+  const s = songs.find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`「${s.title}」を削除しますか？`)) return;
+  songs = songs.filter(x => x.id !== id);
+  save();
+  render();
+  notify('削除しました');
+}
+
+// --- Tag from edit modal ---
+function addNewTag() {
+  const name = document.getElementById('new-tag-name').value.trim();
+  if (!name) return;
+  if (tags.find(t => t.name === name)) { notify('同名のタグがすでにあります'); return; }
+  const color = TAG_COLORS[tags.length % TAG_COLORS.length];
+  const tag = { id: uid(), name, color };
+  tags.push(tag);
+  save();
+  document.getElementById('new-tag-name').value = '';
+  const s = songs.find(x => x.id === editingId);
+  renderTagSelector(s ? s.tags : []);
+  notify(`タグ「${name}」を追加しました`);
+}
+
+// --- Tag Manager ---
+function openTagManager() {
+  renderTagManagerList();
+  document.getElementById('tag-modal').style.display = '';
+}
+
+function renderTagManagerList() {
+  const el = document.getElementById('tag-list-edit');
+  if (!tags.length) { el.innerHTML = '<div style="color:var(--text3);font-size:13px">タグがまだありません</div>'; return; }
+  el.innerHTML = tags.map(t => {
+    const count = songs.filter(s => s.tags.includes(t.id)).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border)">
+      <span class="tag-pill tc-${t.color}" style="min-width:80px">${esc(t.name)}</span>
+      <span style="font-size:12px;color:var(--text3)">${count}曲</span>
+      <select style="margin-left:auto;font-size:12px;padding:3px 6px" onchange="changeTagColor('${t.id}',this.value)">
+        ${TAG_COLORS.map(c=>`<option value="${c}"${t.color===c?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <button class="icon-btn" title="削除" onclick="deleteTag('${t.id}')" style="opacity:1">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function addTagFromManager() {
+  const name = document.getElementById('new-tag-name2').value.trim();
+  const color = document.getElementById('new-tag-color').value;
+  if (!name) return;
+  if (tags.find(t => t.name === name)) { notify('同名のタグがすでにあります'); return; }
+  tags.push({ id: uid(), name, color });
+  save();
+  document.getElementById('new-tag-name2').value = '';
+  renderTagManagerList();
+  notify(`タグ「${name}」を追加しました`);
+}
+
+function changeTagColor(id, color) {
+  const t = tags.find(x => x.id === id);
+  if (t) { t.color = color; save(); renderTagManagerList(); render(); }
+}
+
+function deleteTag(id) {
+  const t = tags.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm(`タグ「${t.name}」を削除しますか？\n（曲のタグからも削除されます）`)) return;
+  tags = tags.filter(x => x.id !== id);
+  songs.forEach(s => { s.tags = s.tags.filter(x => x !== id); });
+  save();
+  renderTagManagerList();
+  render();
+  notify('タグを削除しました');
+}
+
+// --- CSV Import ---
+function openImport() {
+  csvData = null; csvHeaders = [];
+  document.getElementById('csv-file').value = '';
+  document.getElementById('csv-preview-area').style.display = 'none';
+  document.getElementById('import-btn').style.display = 'none';
+  document.getElementById('import-modal').style.display = '';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  return lines.map(line => {
+    const cells = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if ((c === ',' || c === '\t') && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  });
+}
+
+function previewCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const rows = parseCSV(ev.target.result);
+    if (rows.length < 2) { notify('データが少なすぎます'); return; }
+    csvHeaders = rows[0];
+    csvData = rows.slice(1).filter(r => r.some(c => c));
+    document.getElementById('csv-preview-text').textContent = rows.slice(0,3).map(r=>r.join(' | ')).join('\n');
+    document.getElementById('import-count').textContent = `${csvData.length} 件のデータを検出`;
+    const opts = csvHeaders.map((h,i) => `<option value="${i}">${h}</option>`).join('');
+    const noOpt = '<option value="-1">（なし）</option>';
+    document.getElementById('col-map').innerHTML = [
+      ['曲名 *','map-title'],['アーティスト','map-artist'],['YouTube URL','map-url'],['メモ','map-memo'],['評価(数字)','map-rating']
+    ].map(([label,id]) => `<label>${label}</label><select id="${id}">${label.includes('*') ? '' : noOpt}${opts}</select>`).join('');
+    autoMap();
+    document.getElementById('csv-preview-area').style.display = '';
+    document.getElementById('import-btn').style.display = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function autoMap() {
+  const pairs = [['map-title',['曲名','title','song','タイトル']],['map-artist',['アーティスト','artist','歌手']],['map-url',['url','youtube','link','リンク']],['map-memo',['メモ','memo','備考','note','comment']],['map-rating',['評価','rating','star','スター']]];
+  pairs.forEach(([id, kws]) => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const idx = csvHeaders.findIndex(h => kws.some(k => h.toLowerCase().includes(k)));
+    if (idx >= 0) sel.value = idx;
+  });
+}
+
+function doImport() {
+  if (!csvData) return;
+  const getIdx = id => parseInt(document.getElementById(id)?.value ?? -1);
+  const ti = getIdx('map-title'), ai = getIdx('map-artist'), ui = getIdx('map-url'), mi = getIdx('map-memo'), ri = getIdx('map-rating');
+  if (ti < 0) { notify('曲名の列を選択してください'); return; }
+  let added = 0;
+  csvData.forEach(row => {
+    const title = row[ti]?.trim();
+    if (!title) return;
+    const song = { id: uid(), title, artist: ai>=0 ? (row[ai]||'').trim() : '', youtubeUrl: ui>=0 ? (row[ui]||'').trim() : '', memo: mi>=0 ? (row[mi]||'').trim() : '', rating: ri>=0 ? Math.min(5,Math.max(0,parseInt(row[ri])||0)) : 0, tags: [], addedAt: Date.now() - added };
+    songs.push(song);
+    added++;
+  });
+  save();
+  render();
+  closeModal('import-modal');
+  notify(`${added}曲をインポートしました`);
+}
+
+// --- CSV Export ---
+function clearStorage() {
+  if (!confirm(`すべてのデータ（${songs.length}曲）を削除しますか？\nこの操作は取り消せません。`)) return;
+  songs = [];
+  localStorage.removeItem('mlb-songs');
+  render();
+  notify('データをクリアしました');
+}
+
+function exportCSV() {
+  const header = ['曲名','アーティスト','YouTube URL','タグ','評価','メモ','追加日'];
+  const rows = songs.map(s => [
+    s.title, s.artist, s.youtubeUrl||'',
+    s.tags.map(id => getTag(id)?.name||'').filter(Boolean).join('|'),
+    s.rating||'', s.memo||'',
+    new Date(s.addedAt).toLocaleDateString('ja-JP')
+  ]);
+  const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `music-library-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  notify('CSVをエクスポートしました');
+}
+
+// --- Utils ---
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function notify(msg) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// --- Init ---
+load();
+render();
+document.getElementById('qa-url').focus();
+</script>
+</body>
+</html>
