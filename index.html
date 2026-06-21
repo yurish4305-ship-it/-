@@ -7,148 +7,457 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #eeede8;
-    --text: #1a1a1a; --text2: #555550; --text3: #888882;
-    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
-    --accent: #5340b8; --accent-bg: #eeedfe; --accent-text: #3c3489;
-    --green: #3b6d11; --green-bg: #eaf3de;
-    --amber: #854f0b; --amber-bg: #faeeda;
-    --red: #a32d2d; --red-bg: #fcebeb;
-    --teal: #0f6e56; --teal-bg: #e1f5ee;
-    --coral: #993c1d; --coral-bg: #faece7;
-    --pink: #993556; --pink-bg: #fbeaf0;
-    --radius: 8px; --radius-lg: 12px;
+    --bg: #ffffff;
+    --bg2: #f5f5f7;
+    --bg3: #e8e8ed;
+    --text: #1c1c1e;
+    --text2: #636366;
+    --text3: #aeaeb2;
+    --border: rgba(60,60,67,0.1);
+    --border2: rgba(60,60,67,0.18);
+    --accent: #5340b8;
+    --accent-bg: #eeedfe;
+    --accent-text: #3c3489;
+    --green: #34a853; --green-bg: #e6f4ea;
+    --amber: #f9ab00; --amber-bg: #fef9e7;
+    --red: #ea4335;   --red-bg: #fce8e6;
+    --teal: #0f9d58;  --teal-bg: #e6f4f0;
+    --coral: #ff6d00; --coral-bg: #fff3e0;
+    --pink: #e91e63;  --pink-bg: #fce4ec;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1c1c1a; --bg2: #242422; --bg3: #2e2e2b;
-      --text: #f0efe8; --text2: #b4b2a9; --text3: #888882;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
-      --accent: #9f96e8; --accent-bg: #26215c; --accent-text: #cecbf6;
-      --green: #c0dd97; --green-bg: #173404;
-      --amber: #fac775; --amber-bg: #412402;
-      --red: #f7c1c1; --red-bg: #501313;
-      --teal: #9fe1cb; --teal-bg: #04342c;
-      --coral: #f5c4b3; --coral-bg: #4a1b0c;
-      --pink: #f4c0d1; --pink-bg: #4b1528;
+      --bg: #1c1c1e;
+      --bg2: #2c2c2e;
+      --bg3: #3a3a3c;
+      --text: #f2f2f7;
+      --text2: #aeaeb2;
+      --text3: #636366;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --accent: #a79fef;
+      --accent-bg: #26215c;
+      --accent-text: #d0ccff;
+      --green: #30d158;  --green-bg: #1a3a22;
+      --amber: #ffd60a;  --amber-bg: #3a2e00;
+      --red: #ff453a;    --red-bg: #3a1210;
+      --teal: #32d74b;   --teal-bg: #0d3320;
+      --coral: #ff9f0a;  --coral-bg: #3a2200;
+      --pink: #ff375f;   --pink-bg: #3a0d1e;
     }
   }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg2); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: var(--bg2);
+    color: var(--text);
+    font-size: 16px;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
   a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
 
-  /* Layout */
-  .app { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
-  .header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .header-title { font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-  .header-stats { display: flex; gap: 16px; margin-left: auto; }
-  .stat { font-size: 12px; color: var(--text3); }
-  .stat strong { color: var(--text); font-weight: 500; }
+  /* ── App Shell ── */
+  .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
 
-  /* Toolbar */
-  .toolbar { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  /* ── Header (iOS-style navigation bar) ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .header { background: rgba(28,28,30,0.85); }
+  }
+  .header-title {
+    font-size: 17px;
+    font-weight: 600;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: -0.3px;
+  }
+  .header-stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat { font-size: 13px; color: var(--text3); }
+  .stat strong { color: var(--accent); font-weight: 600; }
+
+  /* ── Inputs & Selects ── */
   input[type="text"], input[type="url"], select, textarea {
-    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius);
-    color: var(--text); font-size: 13px; padding: 6px 10px; outline: none; font-family: inherit;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 16px; /* prevents iOS zoom */
+    padding: 10px 14px;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
   }
   input[type="text"]:focus, input[type="url"]:focus, select:focus, textarea:focus {
-    border-color: var(--accent); box-shadow: 0 0 0 2px rgba(83,74,183,0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(83,64,184,0.15);
   }
-  .search-box { flex: 1; min-width: 180px; padding: 7px 10px; font-size: 13px; }
-  select { cursor: pointer; }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  /* ── Buttons ── */
   button {
-    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius);
-    color: var(--text); font-size: 13px; padding: 6px 12px; cursor: pointer; font-family: inherit;
-    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 15px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  button:hover { background: var(--bg3); }
-  button:active { transform: scale(0.98); }
-  button.primary { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); font-weight: 500; }
-  button.primary:hover { opacity: 0.85; }
-  .tag-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  button:active { opacity: 0.7; transform: scale(0.97); transition: transform 0.08s, opacity 0.08s; }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  button.primary:active { opacity: 0.85; }
+  button.ghost {
+    background: none;
+    border-color: transparent;
+    color: var(--accent);
+    font-weight: 500;
+    padding: 10px 10px;
+  }
 
-  /* Quick add */
-  .quick-add { background: var(--bg); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .quick-add input { flex: 1; min-width: 140px; }
-  .quick-add .url-hint { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  /* ── Quick Add (always visible top panel) ── */
+  .quick-add {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quick-add-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .quick-add-row { display: flex; gap: 8px; }
+  .quick-add-row input { flex: 1; }
 
-  /* Main */
-  .main { padding: 16px 20px; overflow-y: auto; }
+  /* ── Filter Bar (horizontal scroll) ── */
+  .toolbar {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .toolbar input, .toolbar select {
+    flex-shrink: 0;
+    font-size: 14px;
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+  .search-box { min-width: 160px; flex: 1; }
 
-  /* Table */
-  .table-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  th { background: var(--bg2); color: var(--text2); font-weight: 500; font-size: 12px; text-align: left; padding: 8px 12px; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
-  th:hover { color: var(--text); }
-  th .sort-icon { opacity: 0.4; font-size: 10px; }
-  th.sorted .sort-icon { opacity: 1; color: var(--accent-text); }
-  td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg2); }
-  .col-num { width: 48px; color: var(--text3); font-size: 12px; }
-  .col-title { width: 30%; }
-  .col-artist { width: 20%; }
-  .col-tags { width: 22%; }
-  .col-rating { width: 90px; }
-  .col-date { width: 100px; }
-  .col-actions { width: 72px; text-align: right; }
-  .song-title { font-weight: 500; font-size: 13px; }
-  .song-title a { color: var(--text); }
-  .song-title a:hover { color: var(--accent); text-decoration: none; }
-  .song-artist { color: var(--text2); font-size: 12px; }
-  .memo-text { color: var(--text3); font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-  .date-text { color: var(--text3); font-size: 12px; }
+  /* ── Song Cards (replacing table) ── */
+  .main {
+    flex: 1;
+    padding: 12px 16px;
+    padding-bottom: calc(var(--safe-bottom) + 80px); /* room for bottom bar */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cards { display: flex; flex-direction: column; gap: 1px; }
+  .table-wrap {
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 0.5px solid var(--border);
+  }
 
-  /* Tags */
-  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tag { font-size: 11px; padding: 2px 7px; border-radius: 20px; cursor: pointer; font-weight: 500; border: none; }
-  .tag:hover { opacity: 0.8; }
-  .tag-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+  /* hide desktop table on mobile */
+  table { display: none; }
 
-  /* Rating */
-  .stars { display: inline-flex; gap: 1px; }
-  .star { font-size: 14px; cursor: pointer; color: var(--border2); transition: color 0.1s; }
-  .star.on { color: #e29a00; }
-  .star:hover ~ .star { color: var(--border2) !important; }
-  .stars:hover .star { color: #e29a00; }
-  .stars .star:hover ~ .star { color: var(--border2); }
+  /* ── Card Item ── */
+  .song-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 60px;
+    position: relative;
+  }
+  .song-card:last-child { border-bottom: none; }
+  .song-card:active { background: var(--bg2); }
 
-  /* Row actions */
-  .row-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; }
-  tr:hover .row-actions { opacity: 1; }
-  .icon-btn { background: none; border: none; color: var(--text3); padding: 3px 5px; font-size: 16px; cursor: pointer; border-radius: 4px; }
-  .icon-btn:hover { color: var(--text); background: var(--bg3); }
+  .card-num {
+    font-size: 12px;
+    color: var(--text3);
+    min-width: 22px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--bg3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    overflow: hidden;
+  }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.1px;
+  }
+  .card-artist {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .card-stars { font-size: 11px; letter-spacing: 1px; color: #e29a00; flex-shrink: 0; }
+  .card-stars.empty { color: var(--bg3); }
+  .card-actions {
+    display: flex;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    padding: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .icon-btn:active { background: var(--bg3); color: var(--text); }
 
-  /* Empty state */
-  .empty { padding: 60px 20px; text-align: center; color: var(--text3); }
-  .empty-title { font-size: 16px; color: var(--text2); margin-bottom: 8px; }
+  /* ── Tag pills ── */
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-  /* Modal */
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
-  .modal-header { padding: 16px 20px 12px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .modal-title { font-size: 15px; font-weight: 500; }
-  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .modal-footer { padding: 12px 20px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-  .field label { display: block; font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 5px; }
-  .field input, .field select, .field textarea { width: 100%; }
-  .field textarea { resize: vertical; min-height: 60px; }
-  .tag-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .tag-option { padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg2); }
-  .tag-option.selected { font-weight: 500; }
-  .new-tag-row { display: flex; gap: 6px; margin-top: 8px; }
+  /* ── Empty state ── */
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 18px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; line-height: 1.5; }
+
+  /* ── Bottom toolbar (iOS tab-bar style) ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.92);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-top: 0.5px solid var(--border);
+    padding: 8px 16px calc(var(--safe-bottom) + 8px);
+    display: flex;
+    gap: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .bottom-bar { background: rgba(28,28,30,0.92); }
+  }
+  .bottom-bar button {
+    flex: 1;
+    font-size: 13px;
+    padding: 8px 6px;
+    min-height: 40px;
+    border-radius: 10px;
+    gap: 4px;
+    flex-direction: column;
+    font-weight: 500;
+  }
+  .bottom-bar .btn-icon { font-size: 20px; line-height: 1; }
+
+  /* ── Modal (slides up from bottom on mobile) ── */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal {
+    background: var(--bg);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    margin: 12px auto 4px;
+  }
+  .modal-header {
+    padding: 8px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .modal-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .modal-body { padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+  .modal-footer { padding: 12px 16px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; }
+  .modal-footer button { flex: 1; }
+
+  .field label { display: block; font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+  .field input, .field select, .field textarea { font-size: 16px; }
+  .field textarea { resize: none; min-height: 80px; }
+
+  .tag-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tag-option {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+  }
+  .tag-option.selected { border-color: var(--accent); font-weight: 600; }
+  .new-tag-row { display: flex; gap: 8px; margin-top: 10px; }
   .new-tag-row input { flex: 1; }
 
-  /* Import modal */
-  .csv-preview { font-family: monospace; font-size: 11px; background: var(--bg2); border-radius: var(--radius); padding: 10px; max-height: 120px; overflow: auto; color: var(--text2); border: 0.5px solid var(--border); margin-top: 8px; }
+  /* Stars in modal */
+  .stars { display: inline-flex; gap: 4px; }
+  .star { font-size: 28px; cursor: pointer; color: var(--bg3); transition: color 0.1s; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .star.on { color: #e29a00; }
+
+  /* CSV import */
+  .csv-preview { font-family: 'Menlo', monospace; font-size: 11px; background: var(--bg2); border-radius: var(--radius); padding: 10px; max-height: 100px; overflow: auto; color: var(--text2); border: 0.5px solid var(--border); margin-top: 8px; }
   .col-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-  .col-map label { font-size: 12px; color: var(--text2); }
+  .col-map label { font-size: 13px; color: var(--text2); }
 
-  /* Notification */
-  .notif { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-  .notif.show { opacity: 1; }
+  /* Notification (above bottom bar) */
+  .notif {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 72px);
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: rgba(30,30,30,0.9);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .notif.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Tag color classes */
+  /* Tag colors */
   .tc-purple { background: var(--accent-bg); color: var(--accent-text); }
   .tc-green  { background: var(--green-bg); color: var(--green); }
   .tc-amber  { background: var(--amber-bg); color: var(--amber); }
@@ -157,13 +466,6 @@
   .tc-coral  { background: var(--coral-bg); color: var(--coral); }
   .tc-pink   { background: var(--pink-bg); color: var(--pink); }
   .tc-gray   { background: var(--bg3); color: var(--text2); }
-
-  @media (max-width: 600px) {
-    .col-date, .col-num { display: none; }
-    .header-stats { display: none; }
-    .col-title { width: 40%; }
-    .col-artist { width: 25%; }
-  }
 </style>
 </head>
 <body>
@@ -173,45 +475,44 @@
     <div class="header-title">🎵 My Music Library</div>
     <div class="header-stats">
       <div class="stat"><strong id="stat-total">0</strong> 曲</div>
-      <div class="stat"><strong id="stat-filtered">0</strong> 件表示</div>
+      <div class="stat" id="stat-filtered-wrap" style="display:none"><strong id="stat-filtered">0</strong> 件</div>
     </div>
-    <button onclick="openImport()">📥 CSVインポート</button>
-    <button onclick="exportCSV()">📤 CSVエクスポート</button>
-    <button onclick="clearStorage()" style="color:var(--red)">🗑 データをクリア</button>
   </div>
 
   <div class="quick-add">
-    <span style="font-size:12px;color:var(--text2);white-space:nowrap;font-weight:500;">＋ 追加</span>
-    <input type="url" id="qa-url" placeholder="YouTubeのURLを貼る（自動で曲名を取得）" style="flex:2;min-width:200px" onpaste="handleUrlPaste(event)" onkeydown="if(event.key==='Enter')quickAdd()">
-    <input type="text" id="qa-title" placeholder="曲名 *" style="flex:1.2;min-width:120px" onkeydown="if(event.key==='Enter')quickAdd()">
-    <input type="text" id="qa-artist" placeholder="アーティスト" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter')quickAdd()">
-    <button class="primary" onclick="quickAdd()">追加</button>
+    <div class="quick-add-label">追加</div>
+    <input type="url" id="qa-url" placeholder="🔗 YouTubeのURLを貼る" onpaste="handleUrlPaste(event)" onkeydown="if(event.key==='Enter')document.getElementById('qa-title').focus()">
+    <div class="quick-add-row">
+      <input type="text" id="qa-title" placeholder="曲名（必須）" onkeydown="if(event.key==='Enter')quickAdd()">
+      <input type="text" id="qa-artist" placeholder="アーティスト" onkeydown="if(event.key==='Enter')quickAdd()" style="width:auto;flex:1">
+      <button class="primary" onclick="quickAdd()" style="flex-shrink:0;padding:10px 18px">追加</button>
+    </div>
   </div>
 
   <div class="toolbar">
-    <input type="text" class="search-box" id="search" placeholder="🔍 曲名・アーティストで検索..." oninput="render()">
+    <input type="text" class="search-box" id="search" placeholder="🔍 検索..." oninput="render()">
     <select id="filter-tag" onchange="render()">
       <option value="">タグ：すべて</option>
     </select>
     <select id="sort-by" onchange="render()">
-      <option value="addedAt-desc">追加が新しい順</option>
-      <option value="addedAt-asc">追加が古い順</option>
+      <option value="addedAt-desc">新しい順</option>
+      <option value="addedAt-asc">古い順</option>
       <option value="title-asc">曲名 A→Z</option>
       <option value="title-desc">曲名 Z→A</option>
-      <option value="artist-asc">アーティスト A→Z</option>
-      <option value="rating-desc">評価が高い順</option>
+      <option value="artist-asc">アーティスト順</option>
+      <option value="rating-desc">評価順</option>
     </select>
     <select id="filter-rating" onchange="render()">
-      <option value="0">★ 評価：すべて</option>
-      <option value="5">★★★★★ のみ</option>
-      <option value="4">★★★★ 以上</option>
-      <option value="3">★★★ 以上</option>
+      <option value="0">評価：すべて</option>
+      <option value="5">★5のみ</option>
+      <option value="4">★4以上</option>
+      <option value="3">★3以上</option>
     </select>
-    <button onclick="openTagManager()">🏷 タグ管理</button>
   </div>
 
   <div class="main">
     <div class="table-wrap">
+      <!-- desktop table (hidden on iPhone via CSS) -->
       <table>
         <thead>
           <tr>
@@ -224,22 +525,34 @@
             <th class="col-actions"></th>
           </tr>
         </thead>
-        <tbody id="song-list"></tbody>
+        <tbody id="song-list-table"></tbody>
       </table>
+      <!-- iPhone card list -->
+      <div class="cards" id="song-list"></div>
       <div id="empty-state" class="empty" style="display:none">
+        <div class="empty-icon">🎵</div>
         <div class="empty-title">曲がまだありません</div>
-        <p style="margin-top:6px;font-size:13px">上のフォームからYouTubeのURLや曲名を入力して追加してください</p>
+        <div class="empty-sub">上のフォームからYouTubeのURLや<br>曲名を入力して追加してください</div>
       </div>
     </div>
+  </div>
+
+  <!-- Bottom action bar -->
+  <div class="bottom-bar">
+    <button onclick="openImport()"><span class="btn-icon">📥</span>インポート</button>
+    <button onclick="exportCSV()"><span class="btn-icon">📤</span>エクスポート</button>
+    <button onclick="openTagManager()"><span class="btn-icon">🏷</span>タグ管理</button>
+    <button onclick="clearStorage()" style="color:var(--red)"><span class="btn-icon">🗑</span>クリア</button>
   </div>
 </div>
 
 <!-- Edit Modal -->
 <div id="edit-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('edit-modal')">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="edit-modal-title">曲を編集</div>
-      <button class="icon-btn" onclick="closeModal('edit-modal')" style="opacity:1;font-size:18px">✕</button>
+      <button class="icon-btn" onclick="closeModal('edit-modal')" style="font-size:20px">✕</button>
     </div>
     <div class="modal-body">
       <div class="field"><label>曲名 *</label><input type="text" id="edit-title"></div>
@@ -275,9 +588,10 @@
 <!-- Import Modal -->
 <div id="import-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('import-modal')">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">CSVインポート</div>
-      <button class="icon-btn" onclick="closeModal('import-modal')" style="opacity:1;font-size:18px">✕</button>
+      <button class="icon-btn" onclick="closeModal('import-modal')" style="font-size:20px">✕</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -302,9 +616,10 @@
 <!-- Tag Manager Modal -->
 <div id="tag-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeModal('tag-modal')">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">タグ管理</div>
-      <button class="icon-btn" onclick="closeModal('tag-modal')" style="opacity:1;font-size:18px">✕</button>
+      <button class="icon-btn" onclick="closeModal('tag-modal')" style="font-size:20px">✕</button>
     </div>
     <div class="modal-body">
       <div id="tag-list-edit"></div>
@@ -462,45 +777,44 @@ function getFilteredSorted() {
 function render() {
   updateTagFilter();
   const list = getFilteredSorted();
-  const tbody = document.getElementById('song-list');
   document.getElementById('stat-total').textContent = songs.length.toLocaleString();
   document.getElementById('stat-filtered').textContent = list.length.toLocaleString();
 
+  const cardList = document.getElementById('song-list');
+
   if (!list.length) {
-    tbody.innerHTML = '';
+    cardList.innerHTML = '';
     document.getElementById('empty-state').style.display = '';
   } else {
     document.getElementById('empty-state').style.display = 'none';
-    tbody.innerHTML = list.map((s, i) => {
+    cardList.innerHTML = list.map((s, i) => {
       const tag = getTag(s.tags[0]);
       const extraTags = s.tags.slice(1).length;
       const tagHtml = tag
         ? `<span class="tag-pill tc-${tag.color}">${tag.name}${extraTags ? ` +${extraTags}` : ''}</span>`
         : '';
-      const stars = '★'.repeat(s.rating) + '☆'.repeat(5 - s.rating);
-      const starsColor = s.rating ? '#e29a00' : 'var(--border2)';
-      const ytLink = s.youtubeUrl
-        ? `<a href="${esc(s.youtubeUrl)}" target="_blank" rel="noopener">${esc(s.title)}</a>`
-        : esc(s.title);
-      const date = new Date(s.addedAt).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});
-      return `<tr>
-        <td class="col-num">${i+1}</td>
-        <td class="col-title">
-          <div class="song-title">${ytLink}</div>
-          ${s.memo ? `<div class="memo-text">${esc(s.memo)}</div>` : ''}
-        </td>
-        <td class="col-artist"><span class="song-artist">${esc(s.artist)}</span></td>
-        <td class="col-tags">${tagHtml}</td>
-        <td class="col-rating"><span style="color:${starsColor};font-size:13px;letter-spacing:1px">${stars}</span></td>
-        <td class="col-date"><span class="date-text">${date}</span></td>
-        <td class="col-actions">
-          <div class="row-actions">
-            ${s.youtubeUrl ? `<a class="icon-btn" href="${esc(s.youtubeUrl)}" target="_blank" rel="noopener" title="YouTubeで開く" style="font-size:15px;text-decoration:none">▶</a>` : ''}
-            <button class="icon-btn" title="編集" onclick="openEdit('${s.id}')">✏️</button>
-            <button class="icon-btn" title="削除" onclick="deleteSong('${s.id}')">🗑</button>
+      const stars = s.rating ? '★'.repeat(s.rating) : '☆☆☆☆☆';
+      const starsClass = s.rating ? 'card-stars' : 'card-stars empty';
+      const ytId = s.youtubeUrl ? extractYTId(s.youtubeUrl) : null;
+      const thumbHtml = ytId
+        ? `<img src="https://img.youtube.com/vi/${ytId}/default.jpg" alt="" loading="lazy" onerror="this.parentElement.textContent='🎵'">`
+        : '🎵';
+      return `<div class="song-card" onclick="openEdit('${s.id}')">
+        <div class="card-num">${i+1}</div>
+        <div class="card-thumb">${thumbHtml}</div>
+        <div class="card-body">
+          <div class="card-title">${esc(s.title)}</div>
+          ${s.artist ? `<div class="card-artist">${esc(s.artist)}</div>` : ''}
+          <div class="card-meta">
+            <span class="${starsClass}">${stars}</span>
+            ${tagHtml}
           </div>
-        </td>
-      </tr>`;
+        </div>
+        <div class="card-actions">
+          ${s.youtubeUrl ? `<a class="icon-btn" href="${esc(s.youtubeUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="text-decoration:none" title="YouTubeで開く">▶</a>` : ''}
+          <button class="icon-btn" title="削除" onclick="event.stopPropagation();deleteSong('${s.id}')">🗑</button>
+        </div>
+      </div>`;
     }).join('');
   }
 }
@@ -770,7 +1084,6 @@ function notify(msg) {
 // --- Init ---
 load();
 render();
-document.getElementById('qa-url').focus();
 </script>
 </body>
 </html>
